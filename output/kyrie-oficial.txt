@@ -1,0 +1,15 @@
+ARQUIVO....: kyrie.mp4
+DURACAO....: 1:46
+TONALIDADE.: G maior
+TEMPO......: 129.2 BPM
+COMPASSO...: 4/4
+
+ACORDES POR COMPASSO
+------------------------------------------------------------
+   | Em | D | G | Bm |
+   | C | D | Em |
+ 
+------------------------------------------------------------
+Total de compassos: 58
+
+Analise automatica (estimativa) - confira de ouvido antes de usar.

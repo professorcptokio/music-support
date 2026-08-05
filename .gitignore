@@ -1,0 +1,3 @@
+# Arquivos de audio/video analisados - nao versionar
+input/*
+!input/.gitkeep
