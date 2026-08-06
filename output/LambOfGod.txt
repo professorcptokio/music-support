@@ -1,0 +1,20 @@
+ARQUIVO....: LambOfGod.mp4
+DURACAO....: 1:01
+TONALIDADE.: D maior
+TEMPO......: 117.5 BPM
+COMPASSO...: 4/4
+
+ACORDES POR COMPASSO
+------------------------------------------------------------
+   1: | G | G | G Asus4 | Asus4 D |
+   5: | D Gmaj7 | Gmaj7 | D | A |
+   9: | A Gmaj7 | Gmaj7 | A | A Em |
+  13: | D G | G | D | A |
+  17: | A Gmaj7 | Gmaj7 | A Em | Em |
+  21: | Bm F#m7 | F#m7 Gmaj7 | Gmaj7 | A |
+  25: | A Esus4 | G | A | D |
+  29: | D | D |
+------------------------------------------------------------
+Total de compassos: 30
+
+Analise automatica (estimativa) - confira de ouvido antes de usar.

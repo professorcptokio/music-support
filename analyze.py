@@ -17,6 +17,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import librosa
@@ -53,6 +54,25 @@ DIATONICOS_MENOR = {0: "m", 2: "dim", 3: "", 5: "m", 7: "m", 8: "", 10: ""}
 
 BONUS_DIATONICO = 0.06   # empurra o acorde para dentro da tonalidade detectada
 BONUS_PERMANENCIA = 0.22  # penaliza trocas de acorde a cada batida
+
+
+@dataclass
+class Analise:
+    """Resultado cru da analise, antes de virar TXT ou partitura."""
+
+    nome: str
+    duracao: float
+    y: np.ndarray = field(repr=False)
+    sr: int
+    tonalidade: str
+    tonica: int          # semitons a partir de C
+    modo: str            # "maior" ou "menor"
+    bpm: float
+    tempos_batidas: np.ndarray = field(repr=False)  # em segundos
+    acordes: list[str]   # um por batida; acordes[i] vale de tempos_batidas[i] a [i+1]
+    batidas_por_compasso: int
+    fase: int            # batidas de anacruse antes do primeiro tempo forte
+    compasso: str        # "4/4", "3/4", ...
 
 
 # --------------------------------------------------------------------------- audio
@@ -239,7 +259,11 @@ def formatar_relatorio(nome: str, tonalidade: str, bpm: float, compasso: str,
     return "\n".join(linhas) + "\n"
 
 
-def analisar(caminho: Path) -> str:
+def analisar_arquivo(caminho: Path) -> "Analise":
+    """Roda a analise completa e devolve os dados crus, sem formatacao.
+
+    E o ponto de entrada usado tanto pelo relatorio TXT quanto pelo partitura.py.
+    """
     print(f"[{caminho.name}] carregando audio...")
     y, sr = carregar_audio(caminho)
     duracao = librosa.get_duration(y=y, sr=sr)
@@ -279,9 +303,27 @@ def analisar(caminho: Path) -> str:
     batidas_por_compasso, fase = detectar_compasso(forca, novidade, mudancas)
     compasso = {2: "2/4", 3: "3/4", 4: "4/4", 6: "6/8"}[batidas_por_compasso]
 
-    compassos = agrupar_por_compasso(acordes, batidas_por_compasso, fase)
+    return Analise(
+        nome=caminho.name,
+        duracao=duracao,
+        y=y,
+        sr=sr,
+        tonalidade=tonalidade,
+        tonica=tonica,
+        modo=modo,
+        bpm=bpm,
+        tempos_batidas=librosa.frames_to_time(batidas, sr=sr),
+        acordes=acordes,
+        batidas_por_compasso=batidas_por_compasso,
+        fase=fase,
+        compasso=compasso,
+    )
 
-    return formatar_relatorio(caminho.name, tonalidade, bpm, compasso, compassos, duracao)
+
+def analisar(caminho: Path) -> str:
+    a = analisar_arquivo(caminho)
+    compassos = agrupar_por_compasso(a.acordes, a.batidas_por_compasso, a.fase)
+    return formatar_relatorio(a.nome, a.tonalidade, a.bpm, a.compasso, compassos, a.duracao)
 
 
 def main(argv: list[str]) -> int:

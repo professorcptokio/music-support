@@ -1,0 +1,27 @@
+ARQUIVO....: kyrie.mp4
+DURACAO....: 1:46
+TONALIDADE.: G maior
+TEMPO......: 129.2 BPM
+COMPASSO...: 4/4
+
+ACORDES POR COMPASSO
+------------------------------------------------------------
+   1: | Em | Em | G | G |
+   5: | G | C | D | Em |
+   9: | Em | Em | D G | G |
+  13: | G | C | D | Em |
+  17: | Em | Em | D G | G |
+  21: | G | C | D | Em |
+  25: | Em | Em | D G | G |
+  29: | G E | C | D | Em |
+  33: | Em | Em | D | G |
+  37: | G | C | D | Em |
+  41: | Em | Em | D | G |
+  45: | Bm C | C | D | Em |
+  49: | Em | Em | D | G |
+  53: | G | C D | D | Em |
+  57: | Em | Em |
+------------------------------------------------------------
+Total de compassos: 58
+
+Analise automatica (estimativa) - confira de ouvido antes de usar.
