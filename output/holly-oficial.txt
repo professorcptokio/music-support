@@ -1,0 +1,26 @@
+ARQUIVO....: holly.mp4
+DURACAO....: 1:09
+TONALIDADE.: E maior
+TEMPO......: 136.0 BPM
+COMPASSO...: 3/4
+
+ACORDES POR COMPASSO
+------------------------------------------------------------
+   1: | E | B | C#m | C#m |
+   5: | A | B | E | E |
+   9: | B | B | C#m7 | C#m7  |
+  13: | A  | A | E | E |
+  17: | A | B  | E | E |
+  21: | B | B | E | B |
+  25: | C#m | C#m | A | B |
+  29: | E | E  | A | E |
+  33: | A | B |  E | E |
+  37: | A | A | E | E |
+  41: | A | B | E | E |
+  45: | A | A | E | E |
+  49: | A | B | E | E |
+  53: | E | E |
+------------------------------------------------------------
+Total de compassos: 54
+
+Analise automatica (estimativa) - confira de ouvido antes de usar.
