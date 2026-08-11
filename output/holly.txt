@@ -1,0 +1,38 @@
+ARQUIVO....: holly.mp4
+DURACAO....: 1:09
+TONALIDADE.: E maior
+TEMPO......: 136.0 BPM
+COMPASSO...: 3/4
+IDIOMA.....: en (informado)
+
+ACORDES POR COMPASSO
+------------------------------------------------------------
+   1: | E | E B | B C#m | C#m |
+   5: | G#m A | A B | B E | E |
+   9: | E | D#m G#m7 | C#m7 | C#m7 A |
+  13: | A F#m | E | E | B |
+  17: | B | B C#m | C#m | E |
+  21: | A | F#m7 E | E G#m7 | A B |
+  25: | E | E | B | B |
+  29: | B E | E B | G#m | C#m |
+  33: | C#m F#m | B | B E | E |
+  37: | A | A E | E | E |
+  41: | E B | E | E | E |
+  45: | E | E | E | Amaj7 |
+  49: | B | B E | E | E |
+  53: | E | E |
+------------------------------------------------------------
+Total de compassos: 54
+
+LETRA
+------------------------------------------------------------
+[c.  1  0:00] Holy, holy, holy, Lord God of hosts,
+[c. 15  0:19] Heaven and earth are full of your glory
+[c. 22  0:29] Hosanna in the highest
+[c. 26  0:34] Blessed is he who comes
+[c. 32  0:41] In the name of the Lord
+[c. 36  0:45] Hosanna, Hosanna, Hosanna in the highest
+[c. 43  0:55] Hosanna, Hosanna, Hosanna in the highest
+------------------------------------------------------------
+
+Analise automatica (estimativa) - confira de ouvido antes de usar.

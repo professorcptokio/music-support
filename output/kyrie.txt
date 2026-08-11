@@ -3,6 +3,7 @@ DURACAO....: 1:46
 TONALIDADE.: G maior
 TEMPO......: 129.2 BPM
 COMPASSO...: 4/4
+IDIOMA.....: la (informado)
 
 ACORDES POR COMPASSO
 ------------------------------------------------------------
@@ -23,5 +24,15 @@ ACORDES POR COMPASSO
   57: | Em | Em |
 ------------------------------------------------------------
 Total de compassos: 58
+
+LETRA
+------------------------------------------------------------
+[c.  1  0:00] Kyrie eleison, Kyrie eleison
+[c. 17  0:30] Ie eleison, Ie eleison,
+[c. 24  0:44] Christe eleison, Christe eleison.
+[c. 33  1:00] Ie stent laet sol, Ie stent laet sol.
+[c. 40  1:14] Ie stent laet sol, Ie stent laet sol.
+[c. 49  1:30] in eleison, in eleison.
+------------------------------------------------------------
 
 Analise automatica (estimativa) - confira de ouvido antes de usar.

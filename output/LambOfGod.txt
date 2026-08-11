@@ -3,6 +3,7 @@ DURACAO....: 1:01
 TONALIDADE.: D maior
 TEMPO......: 117.5 BPM
 COMPASSO...: 4/4
+IDIOMA.....: en (informado)
 
 ACORDES POR COMPASSO
 ------------------------------------------------------------
@@ -16,5 +17,15 @@ ACORDES POR COMPASSO
   29: | D | D |
 ------------------------------------------------------------
 Total de compassos: 30
+
+LETRA
+------------------------------------------------------------
+[c.  1  0:00] Lamb of God who'll take away the sins of the world
+[c.  8  0:15] Have mercy on us
+[c. 12  0:22] Lamb of God, who'll take away the sins of the world
+[c. 16  0:32] Have mercy on us
+[c. 20  0:39] Lamb of God, who'll take away the sins of the world
+[c. 24  0:49] When does it end?
+------------------------------------------------------------
 
 Analise automatica (estimativa) - confira de ouvido antes de usar.

@@ -32,6 +32,7 @@ from analyze import (
     QUALIDADES,
     Analise,
     analisar_arquivo,
+    limites_compassos,
 )
 
 # Faixa onde a melodia e procurada. A CQT vai alem no agudo (ate NOTA_TETO) porque
@@ -156,18 +157,6 @@ def corrigir_oitavas(slots: list[int | None]) -> list[int | None]:
 
 
 # ------------------------------------------------------------------ compassos
-
-def limites_compassos(n_batidas: int, bpc: int, fase: int) -> list[tuple[int, int]]:
-    """Lista de (batida inicial, quantidade de batidas). O primeiro pode ser anacruse."""
-    limites = []
-    if fase:
-        limites.append((0, fase))
-    inicio = fase
-    while inicio < n_batidas:
-        limites.append((inicio, min(bpc, n_batidas - inicio)))
-        inicio += bpc
-    return limites
-
 
 def agrupar(slots: list[int | None], compassos: list[tuple[int, int]],
             acordes: list[str], subdiv: int) -> list[Grupo]:

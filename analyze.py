@@ -6,13 +6,19 @@ Cada TXT contem:
   - COMPASSO estimado (2/4, 3/4, 4/4, 6/8)
   - Os possiveis acordes de cada compasso, separados por |
 
+Com --letra, transcreve tambem o canto (faster-whisper) e ancora cada trecho no
+compasso em que ele entra.
+
 Uso:
     python analyze.py                 # processa tudo que houver em input/
     python analyze.py input/x.mp4     # processa apenas os arquivos indicados
+    python analyze.py --letra         # inclui a letra transcrita
+    python analyze.py --letra --idioma pt
 """
 
 from __future__ import annotations
 
+import argparse
 import shutil
 import subprocess
 import sys
@@ -54,6 +60,16 @@ DIATONICOS_MENOR = {0: "m", 2: "dim", 3: "", 5: "m", 7: "m", 8: "", 10: ""}
 
 BONUS_DIATONICO = 0.06   # empurra o acorde para dentro da tonalidade detectada
 BONUS_PERMANENCIA = 0.22  # penaliza trocas de acorde a cada batida
+
+
+@dataclass
+class Fala:
+    """Um trecho de letra transcrito, ancorado no tempo e no compasso."""
+
+    inicio: float     # em segundos
+    fim: float
+    texto: str
+    compasso: int     # numeracao de limites_compassos, igual a do resto do projeto
 
 
 @dataclass
@@ -203,15 +219,26 @@ def reconhecer_acordes(croma_batidas: np.ndarray, tonica: int, modo: str) -> lis
     return [nomes[i] for i in sequencia]
 
 
+def limites_compassos(n_batidas: int, bpc: int, fase: int) -> list[tuple[int, int]]:
+    """Lista de (batida inicial, quantidade de batidas). O primeiro pode ser anacruse.
+
+    E a numeracao unica do projeto: relatorio TXT, letra e partitura usam esta mesma
+    divisao, entao o compasso 12 e o mesmo compasso nos tres.
+    """
+    limites = []
+    if fase:
+        limites.append((0, fase))
+    inicio = fase
+    while inicio < n_batidas:
+        limites.append((inicio, min(bpc, n_batidas - inicio)))
+        inicio += bpc
+    return limites
+
+
 def agrupar_por_compasso(acordes: list[str], batidas_por_compasso: int, fase: int) -> list[list[str]]:
     """Quebra a sequencia de batidas em compassos, listando ate 2 acordes por compasso."""
-    compassos = []
-    inicio = fase
-    if fase:  # anacruse
-        compassos.append(acordes[:fase])
-    while inicio < len(acordes):
-        compassos.append(acordes[inicio:inicio + batidas_por_compasso])
-        inicio += batidas_por_compasso
+    compassos = [acordes[i:i + n]
+                 for i, n in limites_compassos(len(acordes), batidas_por_compasso, fase)]
 
     resultado = []
     for bloco in compassos:
@@ -229,20 +256,65 @@ def agrupar_por_compasso(acordes: list[str], batidas_por_compasso: int, fase: in
     return resultado
 
 
+# -------------------------------------------------------------------------- letra
+
+def carregar_modelo(nome: str):
+    """Carrega o Whisper uma vez so, para o lote inteiro reaproveitar."""
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError as erro:
+        raise RuntimeError(
+            "para transcrever a letra instale o motor de reconhecimento:\n"
+            "    pip install faster-whisper"
+        ) from erro
+
+    print(f"carregando o modelo '{nome}' (o primeiro uso baixa os pesos)...")
+    return WhisperModel(nome, device="cpu", compute_type="int8")
+
+
+def transcrever(a: Analise, modelo, idioma: str | None) -> tuple[list[Fala], str, float]:
+    """Transcreve o canto e ancora cada trecho no compasso em que ele comeca."""
+    audio = librosa.resample(a.y, orig_sr=a.sr, target_sr=16000)
+    audio = audio / max(1.0, float(np.abs(audio).max()))
+
+    segmentos, info = modelo.transcribe(
+        audio,
+        language=idioma,
+        beam_size=5,
+        # O VAD e treinado em fala e descarta canto: no kyrie derrubou a faixa
+        # inteira (0 trechos com VAD contra 5 sem). Por isso fica desligado, ao
+        # custo de o Whisper as vezes inventar frases em trecho instrumental.
+        vad_filter=False,
+        condition_on_previous_text=False,  # sem isso o Whisper entra em loop no refrao
+    )
+
+    inicios = [a.tempos_batidas[batida]
+               for batida, _ in limites_compassos(len(a.acordes),
+                                                  a.batidas_por_compasso, a.fase)]
+
+    falas = []
+    for s in segmentos:
+        texto = s.text.strip()
+        if texto:
+            compasso = int(np.searchsorted(inicios, s.start, side="right"))
+            falas.append(Fala(s.start, s.end, texto, max(1, compasso)))
+    return falas, info.language, info.language_probability
+
+
 # ------------------------------------------------------------------------- saida
 
-def formatar_relatorio(nome: str, tonalidade: str, bpm: float, compasso: str,
-                       compassos: list[list[str]], duracao: float) -> str:
+def formatar_relatorio(a: Analise, compassos: list[list[str]],
+                       falas: list[Fala] | None = None, rotulo: str | None = None) -> str:
     linhas = [
-        f"ARQUIVO....: {nome}",
-        f"DURACAO....: {int(duracao // 60)}:{int(duracao % 60):02d}",
-        f"TONALIDADE.: {tonalidade}",
-        f"TEMPO......: {bpm:.1f} BPM",
-        f"COMPASSO...: {compasso}",
-        "",
-        "ACORDES POR COMPASSO",
-        "-" * 60,
+        f"ARQUIVO....: {a.nome}",
+        f"DURACAO....: {int(a.duracao // 60)}:{int(a.duracao % 60):02d}",
+        f"TONALIDADE.: {a.tonalidade}",
+        f"TEMPO......: {a.bpm:.1f} BPM",
+        f"COMPASSO...: {a.compasso}",
     ]
+    if rotulo:
+        linhas.append(f"IDIOMA.....: {rotulo}")
+    linhas += ["", "ACORDES POR COMPASSO", "-" * 60]
 
     por_linha = 4
     for i in range(0, len(compassos), por_linha):
@@ -250,12 +322,19 @@ def formatar_relatorio(nome: str, tonalidade: str, bpm: float, compasso: str,
         celulas = " | ".join(" ".join(c) for c in bloco)
         linhas.append(f"{i + 1:>4}: | {celulas} |")
 
-    linhas += [
-        "-" * 60,
-        f"Total de compassos: {len(compassos)}",
-        "",
-        "Analise automatica (estimativa) - confira de ouvido antes de usar.",
-    ]
+    linhas += ["-" * 60, f"Total de compassos: {len(compassos)}"]
+
+    if falas is not None:
+        linhas += ["", "LETRA", "-" * 60]
+        if falas:
+            for f in falas:
+                marca = f"c.{f.compasso:>3}  {int(f.inicio // 60)}:{int(f.inicio % 60):02d}"
+                linhas.append(f"[{marca}] {f.texto}")
+        else:
+            linhas.append("(nenhum canto reconhecido - faixa instrumental?)")
+        linhas.append("-" * 60)
+
+    linhas += ["", "Analise automatica (estimativa) - confira de ouvido antes de usar."]
     return "\n".join(linhas) + "\n"
 
 
@@ -320,15 +399,68 @@ def analisar_arquivo(caminho: Path) -> "Analise":
     )
 
 
-def analisar(caminho: Path) -> str:
+def analisar(caminho: Path, modelo=None, idioma: str | None = None) -> str:
     a = analisar_arquivo(caminho)
     compassos = agrupar_por_compasso(a.acordes, a.batidas_por_compasso, a.fase)
-    return formatar_relatorio(a.nome, a.tonalidade, a.bpm, a.compasso, compassos, a.duracao)
+
+    falas = rotulo = None
+    if modelo is not None:
+        print(f"[{caminho.name}] transcrevendo a letra (pode demorar)...")
+        falas, detectado, confianca = transcrever(a, modelo, idioma)
+        if idioma:
+            rotulo = f"{detectado} (informado)"
+        else:
+            # A confianca nao separa acerto de erro em canto: no kyrie o modelo
+            # deu ingles com 65% para uma faixa em latim. Por isso o aviso sai
+            # sempre que o idioma nao foi informado, e nao abaixo de um limiar.
+            rotulo = f"{detectado} (detectado, confianca {confianca:.0%})"
+            print(f"[{caminho.name}] AVISO: idioma detectado automaticamente "
+                  f"({detectado}, {confianca:.0%}). Em canto isso erra com "
+                  f"frequencia - use --idioma se souber qual e.")
+
+    return formatar_relatorio(a, compassos, falas, rotulo)
+
+
+def resolver_idiomas(valores: list[str]) -> tuple[str | None, dict[str, str]]:
+    """Le os --idioma: 'en' vira padrao do lote, 'kyrie=la' vira excecao do arquivo.
+
+    Um lote costuma ser misto (duas musicas em ingles e uma em latim, por exemplo)
+    e a deteccao automatica nao resolve isso, entao da para dizer arquivo a arquivo.
+    """
+    padrao, por_arquivo = None, {}
+    for valor in valores:
+        if "=" in valor:
+            nome, _, codigo = valor.partition("=")
+            if not nome.strip() or not codigo.strip():
+                raise ValueError(f"--idioma invalido: {valor!r} (use ARQUIVO=CODIGO)")
+            por_arquivo[Path(nome.strip()).stem.lower()] = codigo.strip()
+        elif padrao is not None:
+            raise ValueError(f"--idioma geral informado duas vezes: {padrao!r} e {valor!r}")
+        else:
+            padrao = valor.strip()
+    return padrao, por_arquivo
 
 
 def main(argv: list[str]) -> int:
-    if argv:
-        arquivos = [Path(a).resolve() for a in argv]
+    parser = argparse.ArgumentParser(
+        description="Gera um TXT com tonalidade, tempo, compasso e acordes de cada musica.")
+    parser.add_argument("arquivos", nargs="*", help="arquivos a processar (padrao: input/)")
+    parser.add_argument("--letra", action="store_true",
+                        help="transcreve o canto e inclui a letra no relatorio")
+    parser.add_argument("--modelo", default="large-v3",
+                        help="modelo Whisper usado com --letra (padrao: large-v3)")
+    parser.add_argument("--idioma", action="append", default=[], metavar="CODIGO|ARQUIVO=CODIGO",
+                        help="idioma cantado: 'en' vale para todos; 'kyrie=la' so para esse "
+                             "arquivo. Pode repetir. Padrao: detectar (erra muito em canto)")
+    args = parser.parse_args(argv)
+
+    try:
+        idioma_padrao, idioma_por_arquivo = resolver_idiomas(args.idioma)
+    except ValueError as erro:
+        parser.error(str(erro))
+
+    if args.arquivos:
+        arquivos = [Path(a).resolve() for a in args.arquivos]
     else:
         if not INPUT_DIR.exists():
             print(f"Pasta nao encontrada: {INPUT_DIR}")
@@ -340,11 +472,14 @@ def main(argv: list[str]) -> int:
         print(f"Nenhum arquivo de audio/video em {INPUT_DIR}")
         return 1
 
+    modelo = carregar_modelo(args.modelo) if args.letra else None
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     falhas = 0
     for arquivo in arquivos:
         try:
-            relatorio = analisar(arquivo)
+            idioma = idioma_por_arquivo.get(arquivo.stem.lower(), idioma_padrao)
+            relatorio = analisar(arquivo, modelo, idioma)
         except Exception as erro:  # noqa: BLE001 - um arquivo ruim nao para o lote
             falhas += 1
             print(f"[{arquivo.name}] ERRO: {erro}")
